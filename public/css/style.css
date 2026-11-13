@@ -744,6 +744,27 @@ details.urls summary {
   stroke: #fff;
   stroke-width: 3;
 }
+.board .line-tag {
+  animation: tag-in 0.25s ease-out;
+  pointer-events: none;
+}
+.board .line-tag rect,
+.board .line-tag path {
+  fill: var(--ink);
+}
+.board .line-tag text {
+  fill: #fff;
+  font-family: var(--font);
+  font-weight: 800;
+}
+@keyframes tag-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 
 .scroll-hint {
   display: none;

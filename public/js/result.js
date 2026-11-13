@@ -1,7 +1,7 @@
 // 完成したあみだくじ（線のムービー → 名前を辿るムービー）
 import { trace } from './amida.js';
 import { animate, boardFrame, createBoard, GEO } from './board.js';
-import { fill, h, s } from './ui.js';
+import { fill, h, s, truncate } from './ui.js';
 
 const TRACE_COLORS = [
   '#2e86ab',
@@ -159,20 +159,71 @@ export function resultView(root, data) {
     }
     setCaption(`追加の線は${n}本`, '送られた順に引いていきます');
     await wait(1000, c);
+    /** @type {SVGElement | null} */
+    let tag = null;
     for (let i = 0; i < n; i++) {
       const l = r.added[i];
       const last = i === n - 1;
-      const who = `${l.name || noName} の線`;
-      setCaption(last ? '最後の1本！' : `${i + 1} / ${n} 本目`, who);
+      setCaption(last ? '最後の1本！' : `${i + 1} / ${n} 本目`);
       const cx = (board.x(l.col) + board.x(l.col + 1)) / 2;
       await board.moveView(board.boxAt(cx, board.y(l.row), zoomLine), i === 0 ? 700 : 400, c);
+      tag?.remove();
+      tag = c.skipped ? null : nameTag(l.name || noName, cx, board.y(l.row));
       const el = board.rung(l.row, l.col, `rung added ${l.color}`);
       addedLayer.append(el);
       await drawStroke(el, GEO.colGap, last ? 3000 : 1000, c);
       await wait(last ? 800 : 200, c);
     }
+    tag?.remove();
     setCaption('線がそろいました');
     await board.moveView(board.full(), 700, c);
+  }
+
+  /**
+   * 引いている線のすぐ上に、引いた人の名前を吹き出しで出す
+   * @param {string} name
+   * @param {number} cx 線の中央
+   * @param {number} y 線の高さ
+   */
+  function nameTag(name, cx, y) {
+    const vis = board.visible();
+    // 画面上でおよそ 15px の文字。映っている幅に収まらなければ小さくする
+    let font = clamp(15 / vis.k, 6, 24);
+    const text = /** @type {SVGTextElement} */ (
+      s('text', { 'text-anchor': 'middle', 'dominant-baseline': 'central' })
+    );
+    text.textContent = truncate(name, 12);
+    const bubble = s('rect');
+    const tail = s('path');
+    const g = s('g', { class: 'line-tag' }, bubble, tail, text);
+    board.layers.marker.append(g);
+
+    const margin = 6 / vis.k;
+    const maxW = vis.w - margin * 2;
+    text.setAttribute('font-size', String(font));
+    let w = text.getComputedTextLength() + font * 1.4;
+    if (w > maxW) {
+      font *= maxW / w;
+      text.setAttribute('font-size', String(font));
+      w = text.getComputedTextLength() + font * 1.4;
+    }
+    const hgt = font * 1.6;
+    const bottom = y - 4 - font * 0.45; // 線の太さと吹き出しのしっぽの分だけ上
+    const x = clamp(cx, vis.x + margin + w / 2, vis.x + vis.w - margin - w / 2);
+    bubble.setAttribute('rx', String(font * 0.7));
+    bubble.setAttribute('x', String(x - w / 2));
+    bubble.setAttribute('y', String(bottom - hgt));
+    bubble.setAttribute('width', String(w));
+    bubble.setAttribute('height', String(hgt));
+    text.setAttribute('x', String(x));
+    text.setAttribute('y', String(bottom - hgt / 2));
+    const t = font * 0.45;
+    const tx = clamp(cx, x - w / 2 + t * 2, x + w / 2 - t * 2);
+    tail.setAttribute(
+      'd',
+      `M${tx - t},${bottom - 1} L${tx + t},${bottom - 1} L${tx},${bottom + t} Z`,
+    );
+    return g;
   }
 
   /** @param {number} seat */

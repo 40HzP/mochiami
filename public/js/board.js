@@ -115,11 +115,26 @@ export function createBoard({ cols, rows, top, bottom, mode = 'contain', maxLabe
     let scale;
     if (mode === 'scroll') {
       scale = Math.max(40 / GEO.colGap, Math.min(cw / W, (0.82 * vh) / H));
+      svg.setAttribute('width', String(Math.round(W * scale)));
     } else {
+      // 横幅はいっぱいに使う（細長い盤面でも、寄ったときに左右が見えるように）
       scale = Math.min(cw / W, (0.62 * vh) / H);
+      svg.setAttribute('width', String(Math.round(cw)));
     }
-    svg.setAttribute('width', String(Math.round(W * scale)));
     svg.setAttribute('height', String(Math.round(H * scale)));
+  };
+
+  /**
+   * 今の表示範囲のうち、実際に画面に映っている範囲（viewBox より横に広いことがある）
+   * k は 1 単位あたりのピクセル数
+   */
+  const visible = () => {
+    const ew = Number(svg.getAttribute('width')) || W;
+    const eh = Number(svg.getAttribute('height')) || H;
+    const k = Math.min(ew / view.w, eh / view.h);
+    const w = ew / k;
+    const h = eh / k;
+    return { x: view.x + (view.w - w) / 2, y: view.y + (view.h - h) / 2, w, h, k };
   };
 
   /**
@@ -174,6 +189,7 @@ export function createBoard({ cols, rows, top, bottom, mode = 'contain', maxLabe
     fit,
     boxAt,
     full,
+    visible,
     setView,
     moveView,
     get view() {
