@@ -113,6 +113,13 @@ b {
   font-size: 0.75rem;
   padding: 16px;
 }
+.site-footer p {
+  margin: 0 0 4px;
+}
+.site-footer a {
+  color: var(--accent-dark);
+  font-weight: 700;
+}
 
 .card {
   background: var(--card);
