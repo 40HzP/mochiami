@@ -62,6 +62,10 @@ npm test
 
 ## デプロイ
 
+Cloudflare の Workers Builds で GitHub とつないでいます。本番ブランチ（Cloudflare の「設定 → ビルド → ブランチ管理」で指定）にプッシュすると、自動で `npx wrangler deploy` が実行されます。ビルドの結果は Cloudflare の「mochiami → デプロイ」で確認できます。
+
+手元から直接デプロイする場合：
+
 ```bash
 npm run deploy
 ```
